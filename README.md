@@ -11,14 +11,10 @@ This document is designed to give a brief description of the programs uploaded, 
 MDSLLFDRRPDIQLPPQSC*HKYPRKSERETD*LNTGSDRKVSV*HIYV*RSHG*VIAKLMQQR*NQRILLGFYYCNGSMYQEP*SIGRQVFYLIFVSRRATRIYLHVR*RIQAT*MFYRLSPPSSKFFKCVARRVHHRLNSVS*MPHGAWMPLYEFSTVIQKTVYLLNKCAGLSLLVTPLLTR**GDLKCRNWNIHFRQS**CSKQTTDQLRYVY*PPEFLMWSIPTDSFTLSGLIKCDTYGFPLQTFPNINKQ*FAFSMCSTKR*AQIPIQEDNKGDSYHRGRHS*FYYRGEE*VTDIHMHGMILTTSY*WPHVQGCSSVGRTLCTP*IVV
 
 2.Alexandrea_Stylianou_bias_analyzer: 
-  
-  Creates 6000 simulated coding regions, 999 nucleotides long, then compare the codon frequency to the codon frequency found in      
-  cyanobacteria. 
+Creates 6000 simulated coding regions, 999 nucleotides long, then compare the codon frequency to the codon frequency found in     cyanobacteria. 
   
 3.Stylianou_BLAST_Prot:
-  
-  This program was modified to simulate Protein Blast. In essence, this program utilizes a PAM120 table, and scores protein comparisons     based on an exact, good, poor, or bad match. 
+This program was modified to simulate Protein Blast. In essence, this program utilizes a PAM120 table, and scores protein comparisons     based on an exact, good, poor, or bad match. 
 
 4.Stylianou_Linkage_Cluster:
-  
-  Linkage clustering is a modified program that uses Pearson Coefficent in order perform single linkage clustering or complete linkage       clustering. This program uses a text file of microarray data.  
+Linkage clustering is a modified program that uses Pearson Coefficent in order perform single linkage clustering or complete linkage       clustering. This program uses a text file of microarray data.  
