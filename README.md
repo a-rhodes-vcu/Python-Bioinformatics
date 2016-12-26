@@ -18,3 +18,9 @@ This program was modified to simulate Protein Blast. In essence, this program ut
 
 4.Stylianou_Linkage_Cluster:
 Linkage clustering is a modified program that uses Pearson Coefficent in order perform single linkage clustering or complete linkage       clustering. This program uses a text file of microarray data.  
+
+5. Karlin_Dinucleotide_Alexandrea_Stylianou.py
+This program was modified in order to implement Dr. Samuel Karlin's dinucleotide relative abundance of genomic sequence data.
+
+6. alexandrea_stylianou_infothreading.py
+Info threading is a program that was modified in order to evaluate possible homologs. A PDB file is created after a best-fit template is selected. 
