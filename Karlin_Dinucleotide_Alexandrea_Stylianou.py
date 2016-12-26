@@ -160,14 +160,14 @@ class Karlin_dinucleotide(object):
                 NT_counts[direct_NT] += 1
                 NT_counts[revcom_NT] += 1
                 #################### get the dinuc counts
-                DN_counts[direct_DC] += 1
-                DN_counts[revcom_DC] += 1
-
             except KeyError:
                 #if doesn't exisit, then create a key, set to one
                 NT_counts[direct_NT] = 1
                 NT_counts[revcom_NT] = 1
-
+            try:
+                DN_counts[direct_DC] += 1
+                DN_counts[revcom_DC] += 1
+            except KeyError:
                 DN_counts[direct_DC] = 1
                 DN_counts[revcom_DC] = 1
 
