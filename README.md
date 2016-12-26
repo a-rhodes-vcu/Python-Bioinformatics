@@ -12,15 +12,15 @@ MDSLLFDRRPDIQLPPQSC*HKYPRKSERETD*LNTGSDRKVSV*HIYV*RSHG*VIAKLMQQR*NQRILLGFYYCNGSM
 
 2.Alexandrea_Stylianou_bias_analyzer: 
 Creates 6000 simulated coding regions, 999 nucleotides long, then compare the codon frequency to the codon frequency found in     cyanobacteria. 
-  
+
 3.Stylianou_BLAST_Prot:
 This program was modified to simulate Protein Blast. In essence, this program utilizes a PAM120 table, and scores protein comparisons     based on an exact, good, poor, or bad match. 
 
 4.Stylianou_Linkage_Cluster:
-Linkage clustering is a modified program that uses Pearson Coefficent in order perform single linkage clustering or complete linkage       clustering. This program uses a text file of microarray data.  
+Linkage clustering is a modified program that uses Pearson Coefficent in order perform single linkage clustering or complete linkage       clustering. This program uses a text file of microarray data. 
 
-5. Karlin_Dinucleotide_Alexandrea_Stylianou.py
+5.Karlin_Dinucleotide_Alexandrea_Stylianou 
 This program was modified in order to implement Dr. Samuel Karlin's dinucleotide relative abundance of genomic sequence data.
 
-6. alexandrea_stylianou_infothreading.py
-Info threading is a program that was modified in order to evaluate possible homologs. A PDB file is created after a best-fit template is selected. 
+6.alexandrea_stylianou_infothreading
+Info threading is a program that enables protein threading. A PDB file is created after a best-fit template is selected. 
