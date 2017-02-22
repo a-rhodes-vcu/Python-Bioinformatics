@@ -1,0 +1,108 @@
+from __future__ import division
+
+class HMM(object):
+
+    def __init__ (self,sequence, transitions= None, emissions=None):
+
+        self.sequence = sequence
+        if transitions is not None:
+            self.transitions = transitions
+        else:
+            self.transitions = {
+                "S":
+                        {
+                    "+": 0.1,
+                    "-": 0.9,
+                    },
+                "+":
+                    {
+                    "+": 0.5,
+                    "-": 0.5,
+                    },
+                "-":
+                    {
+                    "-": 0.4,
+                    "+": 0.6,
+                    }
+                }
+
+
+        if emissions is not None:
+            self.emissions = emissions
+        else:
+                self.emissions = {
+
+                "S":
+                    {
+                    "": 1   # always emit the null string!
+                    },
+                "+":    # 'F' indicates a fair die
+                    {
+                    "A": 0.30,
+                    "C": 0.25,
+                    "G": 0.15,
+                    "T": 0.30,
+
+                    },
+                "-":     # 'L' indicates a loaded die
+                    {
+                    "A": 0.20,
+                    "C": 0.35,
+                    "G": 0.25,
+                    "T": 0.20,
+
+                    }
+                }
+
+
+    def viterbi(self):
+        #################################       iniatlizing variables/lists   #######################
+        pos_state_list = [1.0,'S']
+        neg_state_list = [1.0,'S']
+        start = 1
+        state_list = []
+        new_state_negative = 0
+        start_to_positive = 'S'
+
+        new_sequence = self.sequence[1::]
+
+        ###############################             put states in list   ################################
+
+        for i in range(len(new_sequence)):
+
+            pos_state_positive = start * self.transitions[start_to_positive]['+']
+            pos_state_negative = new_state_negative * self.transitions['-']['+']
+
+            max_pos = max(pos_state_positive,pos_state_negative) * (self.emissions['+'][new_sequence[i]])
+            state_list.append(max_pos)
+
+            neg_state_positive = start * self.transitions[start_to_positive]['-']
+            neg_state_negative = new_state_negative * self.transitions['-']['-']
+
+            max_neg = max(neg_state_positive,neg_state_negative) * (self.emissions['-'][new_sequence[i]])
+            state_list.append(max_neg)
+
+            pos_state_list[0] = "%.8f" % max_pos
+            neg_state_list[0] = "%.8f" % max_neg
+
+            if max_pos > max_neg:
+                neg_state_list.append("+")
+                pos_state_list.append("+")
+            else:
+                neg_state_list.append("-")
+                pos_state_list.append("-")
+
+            start = max_pos
+            new_state_negative = max_neg
+            start_to_positive = '+'
+
+        return max(pos_state_list,neg_state_list)
+
+def main():
+    A = HMM('_ATGC')
+
+    print(A.viterbi())
+
+
+if __name__ == '__main__':
+    main()
