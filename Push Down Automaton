@@ -1,0 +1,91 @@
+import re
+
+class FSA(object):
+    def __init__(self, cur_state, new_state, cur_position, result_string, sequence):
+        self.cur_state = "Start"
+        self.new_state = " "
+        self.cur_position = 0
+        self.result_string = ""
+        self.temp_string = ""
+        self.sequence = sequence #GCCGCAAGGC
+        self.grammer = {"Start": [("A", "W1", "U"), ("C", "W1", "G"), ("G", "W1", "C"), ("U", "W1", "A")],
+
+                        "W1": [("A", "W2", "U"), ("C", "W2", "G"), ("G", "W2", "C"), ("U", "W2", "A")],
+
+                        "W2": [("A", "W3", "U"), ("C", "W3", "G"), ("G", "W3", "C"), ("U", "W3", "A")],
+
+                        "W3": [("G", "A", "A", "A"), ("G", "C", "A", "A")]
+                        }
+
+    def real_deal(self):
+
+        stack = []
+        temp_stack = []
+        stack.append("Start")
+        meh = ''
+
+        for index,symbol in enumerate(self.sequence):
+                    valid_productions = self.grammer[self.cur_state]
+
+                    for i in valid_productions:
+
+                            if symbol == i[2]: #if symbol is equal to first symbol in tuple
+                                    if self.cur_state is not "W3":
+                                        reverse_tuple = i[::-1] #reverse tuple
+                                        temp = ''
+                                        for i in range(len(reverse_tuple)):
+                                            temp = reverse_tuple[i]
+                                            stack.append(temp)
+
+                                        j = stack.pop()
+                                        if j in self.sequence:
+                                            self.result_string +=j
+                                        else:
+                                            return False
+
+                                        k = stack.pop()
+                                        if k.startswith("W"):
+                                            self.cur_state = k
+                                    else:
+                                        g = ''
+                                        for g in valid_productions:
+                                            g = ''.join(g)
+                                            if self.sequence[4] == g[1]:
+                                                if self.sequence[3:7] ==g:
+                                                    meh =  g[::-1]
+                                                else:
+                                                    return False
+
+        stack.append(meh)
+        stem = stack.pop()
+        if stem[::-1] in self.sequence:
+            self.result_string +=stem
+        else:
+            print "YES"
+            return False
+
+        whoo = ''
+        while stack is not None:
+            whoo = stack.pop()
+            self.result_string +=whoo
+            if len(stack) == 1:
+                stack.pop()
+                if self.result_string[::-1] == self.sequence:
+                    return self.result_string
+                else:
+                    return self.result_string
+
+#"GCCGCAAGGC"
+def main():
+    sequence  = "AUUGCAAAAU"
+    cur_state = "Start"
+    new_state = None
+    cur_position = 0
+    result_string = None
+
+    f = FSA(cur_state, new_state, cur_position, result_string, sequence)
+    print(f.real_deal())
+
+
+if __name__ == '__main__':
+    main()
