@@ -1,0 +1,114 @@
+1)Given  DNA sequence using command-line parameter, calculate GC Content of the sequence. GC Content = Percentage of G and C in the sequence. Please keep in the mind that  dna sequence can have Upper or Lower or both cases(2) 
+
+
+import sys
+
+
+if len(sys.argv) < 2:
+    print"USAGE: python %s dna-sequence" % (sys.argv[0])
+    sys.exit()
+
+
+dna = sys.argv[1]
+dnacount = 0
+length = len(dna)
+for nue in dna:
+   if nue == 'G' or nue == 'C' or nue == 'g' or nue == 'c':
+      dnacount += 1
+      y = dnacount * 100/length
+
+
+
+
+print "DNA Length = %d " % (length)
+print "Number of G's and C's = %d " % (dnacount)
+print "Percentange of G's of C's = %d%% " % (y)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2)Please write a program to bin  N random numbers between 0 and 100 into three groups. Please accept a numerical value of N from command-line. Please generate below output :  (2 points)    
+
+
+import sys
+import random
+
+
+if len(sys.argv)<2:
+    print "USAGE: python %s dna-sequence" % (sys.argv[0])
+    sys.exit()
+
+
+RandomNumber = int(sys.argv[1])
+a = 0
+b = 0
+c = 0
+count = 0
+sum=0
+for counter in range(RandomNumber):
+    R=random.randint(0,100)
+    sum += R
+    if R <= 33:
+        count +=1
+        a +=1
+    elif R > 33 and R <=66:
+        b+= 1
+        count += 1
+    elif R > 66:
+        c+=1
+        count +=1
+print " "
+avg = sum/float(RandomNumber)
+print "Number of computer generated random numbers=  %d " %(count)
+print "Number of random-generated  numbers =                %f" %(avg)
+print "Count of numbers less than 33=                                %d  " % (a)
+print "Count of numbers between 33 and 66=                     %d  " % (b)
+print "Count of numbers greater than 66=                           %d  "% (c)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3) Please write a program to count/calculate how many different ways one can get exactly N numbers of coin heads out of M coin flips. (Count no of different ways to get exactly 3 heads out of 5 coin flips. ).  Please accept values of N and M using command-line parameters. Please print number of different ways in output. N and M are integer numbers. (1 point)
+
+
+import sys
+import math
+
+
+if len(sys.argv) < 3:
+    print "USAGE: python %s dna-sequence"% (sys.argv[0])
+    sys.exit()
+
+
+N = int(sys.argv[1])
+M = int(sys.argv[2])
+
+
+y = (math.factorial(M))/((math.factorial(M-N))*math.factorial(N))
+
+
+print "Number of exact heads =  %d "% (N)
+print "Number of Exact Flips =    %d"%(M)
+print "Total Different Ways  =     %d"%(y)
