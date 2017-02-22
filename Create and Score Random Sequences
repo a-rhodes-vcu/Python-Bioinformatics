@@ -1,0 +1,86 @@
+import random
+import re
+
+
+
+class Make_Random_Seq:
+    def __init__(self,dna_dict):
+        self.dna_dict = dna_dict
+
+
+    def generate(self, SEQ_LEN):
+         #pass a dictionary, instead of hardcoding it in
+        dna_list = []
+        for k,v in self.dna_dict.items():
+            dna_list += [k] *int(round(v * SEQ_LEN))
+        random.shuffle(dna_list)
+        dna_list = "".join(dna_list) #create a string out of a list. know join
+        matchy = re.match("", dna_list)
+        return dna_list
+
+class Score_it:
+    def __init__(self,NUM_TRIALS, sequence):
+        self.NUM_TRIALS = NUM_TRIALS
+        self.sequence = sequence
+        self.success = 0
+
+
+    def match_seq(self, mis_match):
+        direct_s = "".join(self.sequence)
+        i = 0
+        results = []
+        final_results = []
+        if mis_match == 0:
+            for x in re.findall("GTA.{8}TAC", direct_s): #.{20,24}T..{3}T
+                    results.append(set(x))
+                    final_results.append("Direct: {}".format(x))
+            for x in re.findall("GTA.{8}TAC", self.revere_it()): #.{20,24}T..{3}T
+                    results.append(set(x))
+                    final_results.append("Reverse: {}".format(x))
+
+        elif mis_match == 1:
+            for x in re.findall("(GT..{8}TAC)|(GTA.{8}T.C)", direct_s):
+                    results.append(set(x))
+                    final_results.append("Direct:  {}".format(x))
+            for x in re.findall("(GT..{8}TAC)|(GTA.{8}T.C)", self.revere_it()):
+                    results.append(set(x))
+                    final_results.append("Reverse: {}".format(x))
+
+        elif mis_match > 2:
+            print("No more than one mismatch allowed")
+
+        for x in results:
+            i = i + 1
+            self.success = i
+
+        return final_results
+
+    def reverse_it(self):
+        seq_str = "".join(self.sequence)
+        reversed_comp = seq_str.translate(seq_str.maketrans('TAGC', 'ATCG'))
+        return reversed_comp[::-1]
+
+    def __str__(self):
+        out_text = "Number of trials: {}\n".format(self.NUM_TRIALS)
+        out_text += "\tSuccessful: {}\n".format(self.success)
+        out_text += "\tFraction successful: {:.2%}".format(float(self.success) / self.NUM_TRIALS)
+        return out_text
+
+def main():
+    NUM_TRIALS = 100 #TRIAL 100 TIMES
+    SEQ_LEN = 10 #LENGTH OF SEQUENCE
+    MATCHES_WANTED = 0
+    dna_dict = {'A': .30, 'T': .30, 'G': 0.20, 'C': 0.20}
+    d = Make_Random_Seq(dna_dict)
+
+    seq_list= ''
+    seqs = [Make_Random_Seq(dna_dict) for n in range(NUM_TRIALS)]
+    seq_list =[]
+    for trial in range(NUM_TRIALS):
+        seq_list.append(d.generate(SEQ_LEN))
+    sc = Score_it(NUM_TRIALS,seq_list)
+    results=(sc.match_seq(1))
+    print('\n'.join(results))
+    print(sc)
+if __name__ == '__main__':
+    main()
