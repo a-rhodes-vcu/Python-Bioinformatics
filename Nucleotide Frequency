@@ -1,0 +1,85 @@
+import sys
+
+if len(sys.argv) < 3:    
+    print "USAGE: python %s " % (sys.argv[0])
+    sys.exit()
+
+infile = sys.argv[1]
+outfile = sys.argv[2]  
+
+IFH = open(infile)
+IFH.readline()
+
+OFH = open(outfile, 'w')
+
+position_Dict = {}
+total_Dict = {}
+
+seq_list = []
+
+count_A = 'A'
+count_C = 'C'
+count_G = 'G'
+count_T = 'T'
+count_N = 'N'
+totalcounter = 0
+
+
+print>> OFH,  "Position\tA\tC\tG\tT\tN\tTotal\tPercent A\tPercent C\tPercent G\tPercent T\tPercent N "
+
+for line in IFH:
+    line = line.strip()
+    seq_list.append(line) 
+
+s_len = len(seq_list)   
+
+IFH.close()
+
+for z in range(0,s_len,4):
+    seq = seq_list[z]
+    seqlength = len(seq)
+    for i in range(0,seqlength,1): 
+        nuc = seq[i]  
+        position = i  
+        total_Dict.setdefault(position,{}) 
+        total_Dict[position][nuc] = nuc
+        position_Dict.setdefault(position,{})
+        position_Dict[position].setdefault(count_A, 0)
+        position_Dict[position].setdefault(count_C, 0)
+        position_Dict[position].setdefault(count_G, 0)
+        position_Dict[position].setdefault(count_T, 0)
+        position_Dict[position].setdefault(count_N, 0)
+        if nuc == 'A':
+             position_Dict[position][count_A] += 1
+            
+        elif nuc == 'C':
+             position_Dict[position][count_C] += 1
+           
+        elif nuc == 'G':
+             position_Dict[position][count_G] += 1
+        
+        elif nuc == 'T':
+             position_Dict[position][count_T] += 1
+        else:
+             position_Dict[position][count_N] += 1
+for position in total_Dict:   
+    A = position_Dict[position][count_A]
+    C = position_Dict[position][count_C]
+    G = position_Dict[position][count_G]
+    T = position_Dict[position][count_T]
+    N = position_Dict[position][count_N]
+
+    total = int(A + C + G + T + N)
+
+    percent_A = (float(A) / total) * 100
+    percent_C = (float(C) / total) * 100
+    percent_G = (float(G) / total) * 100
+    percent_T = (float(T) / total) * 100
+    percent_N = (float(N) / total) * 100
+    print>> OFH,  "%d  \t%d   \t%d \t%d  \t%d  \t%d  \t%d  \t%.2f%%   \t%.2f%%   \t%.2f%%   \t%.2f%%  \t%.2f%%" % (position, A, C, G, T, N, total, percent_A, percent_C , percent_G , percent_T , percent_N)
+
+OFH.close()
+sys.exit()
+
+   
+
