@@ -1,0 +1,47 @@
+import sys
+import re
+if len(sys.argv) < 4:
+    print "USAGE: python %s " % (sys.argv[0])
+    sys.exit()
+
+in_fasta = sys.argv[1]
+insequence = sys.argv[2]
+outfile = sys.argv[3]                                                                
+
+IFH = open(in_fasta)
+IFH.readline()
+
+EXH = open(insequence)
+EXH.readline()
+OFH = open(outfile,'w')
+fasta_Dict = {}
+Acc_1 = ""
+Acc_2 = ""
+Seq = ""
+for line in IFH:
+    line = line.strip()
+    if line.startswith(">"):
+        Acc_2 = re.search(r'^>(.*?)\|', line).group(1)
+        Acc_1 = Acc_2
+        fasta_Dict.setdefault(Acc_1,'')
+        
+    else:
+        Seq = line
+        fasta_Dict[Acc_1] = line
+IFH.close()
+extracted = ""
+final_extracted= ""
+for line in EXH:
+    line = line.strip()
+    split_line = line.split('\t')
+    AccID = split_line[0]
+    acc_start = int(split_line[1])
+    acc_end = int(split_line[2])
+    for k,v in fasta_Dict.items():
+        if k == AccID:
+            extracted = fasta_Dict[k]
+            final_extracted= extracted[acc_start:acc_end]                                                                                                        
+            print >>OFH, "%s | start = %d | end = %d \n%s \n" % (AccID, acc_start, acc_end, final_extracted)
+EXH.close()
+OFH.close()
+sys.exit()
