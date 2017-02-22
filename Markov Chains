@@ -1,0 +1,89 @@
+from __future__ import division
+from pickle import load
+from FastA_V2 import FastA
+from math import log10
+__author__ = 'Wombat'
+
+
+class UseBias(object):
+
+    running_total_Codon = {}
+    running_total_Codon_model = {}
+    def __init__(self,model_file= "6803PHX.txt", sequence_file='6803Orfs.txt'):
+
+
+        self.sequences = FastA(sequence_file)
+        self.model_file = FastA(model_file)
+        ########################################################################################    GET CODON FREQUENCY OF THE MODEL: "6803PHX.txt" #################################
+        self.new_dict_model = {}
+        model_codon_list = []
+        seq_total_codon_count = 0
+        for annotation, sequence in self.model_file:
+            for symbol in range(0, len(sequence) + 1 - 3, 1):
+                  codon = sequence[symbol:symbol + 3]
+                  model_codon_list.append(codon)
+                  seq_total_codon_count +=1
+        print(len(model_codon_list))
+
+        for i in model_codon_list:
+                UseBias.running_total_Codon_model[i] = UseBias.running_total_Codon_model.get(i, 0) + 1
+
+                for key, value in UseBias.running_total_Codon_model.items():
+                    freq_of_codon_model = float(UseBias.running_total_Codon_model[key])/float(len(model_codon_list))
+                    self.new_dict_model[key] = freq_of_codon_model
+                    #count += self.new_dict_model[key]
+                    #print self.new_dict_model[key]
+
+
+        #########################################################################################################################################################################
+
+        ############################################################    GET CODON FREQUENCY OF THE SEQUENCE FILE 6803Orfs.txt   ####################################
+        codon_list = []
+        seq_total_codon_count = 0
+        for annotation, sequence in self.sequences:
+            for symbol in range(0, len(sequence) + 1 - 3, 1):
+                  codon = sequence[symbol:symbol + 3]
+                  codon_list.append(codon)
+                  seq_total_codon_count +=1
+        for i in codon_list:
+                UseBias.running_total_Codon[i] = UseBias.running_total_Codon.get(i, 0) + 1
+        print(len(codon_list))
+        freq_of_codon = 0
+        self.new_dict = {}
+
+        for key, value in UseBias.running_total_Codon.items():
+                freq_of_codon = float(UseBias.running_total_Codon[key])/float(len(codon_list))
+                self.new_dict[key] =  freq_of_codon
+
+        ##########################################################################################    END OF CODON FREQ SEQUENCE  ###################################
+
+    def ScoreBias(self, output_file='6803-scores.txt'):
+
+        score1 = 0
+        score_summary2= []
+        for annotation, sequence in self.sequences:
+
+            for key in self.new_dict.keys():
+                if key in self.new_dict_model:
+                       score1 += float(self.new_dict[key]) -  float(self.new_dict_model[key])
+
+            score_summary2.append((score1, annotation))
+
+        #     with open(output_file, 'w') as f:
+        #         for score1, annotation in score_summary2:
+        #             string_sum = str(annotation)
+        #             line1 = string_sum.split(" ")
+        #             geneID = line1[0]
+        #             print >> f, '{:.4f}\t{}'.format(score1,geneID)
+        #             print "{:.4f}".format(score1), '\t', annotation
+
+
+
+
+def main():
+
+    A = UseBias()
+    A.ScoreBias()
+
+if __name__ == '__main__':
+    main()
