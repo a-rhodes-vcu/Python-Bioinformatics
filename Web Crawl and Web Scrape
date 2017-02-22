@@ -1,0 +1,87 @@
+from google import search
+from bs4 import BeautifulSoup
+from reptile_db_parse import f
+import urllib2
+import re
+
+class crawl_scrape(object):
+
+    def __init__(self,query,key,f):
+        self.query = query
+        self.key = key
+        self.f = f
+        self.url_list = []
+
+    def crawl(self):
+        i=1
+        for url in search(self.query, stop=2):
+            if url.startswith("http://www.jstor"):
+                self.url_list.append(url)
+                i += 1
+        #print self.url_list
+
+    def scrape(self):
+        #print type(self.key)
+        animal = str(self.key)
+        for i in self.url_list:
+            # try:
+            quote_page = i
+
+            page = urllib2.urlopen(quote_page)
+
+            soup = BeautifulSoup(page, 'html.parser')
+
+            Title_box = soup.find('h1', attrs={'class': 'title'})
+            if Title_box:
+                Title = Title_box.text.strip()
+            else:
+                Title = "Title: DNE"
+
+            Contrib_box = soup.find('div', attrs={'class': 'contrib'})
+            if Contrib_box:
+                Contrib = Contrib_box.text.strip()
+
+            else:
+                Contrib = "Contrib: DNE"
+
+            Journal_box = soup.find('div', attrs={'class': 'journal'})
+            if Journal_box:
+                Journal = Journal_box.text.strip()
+            else:
+                Journal = "Journal: DNE"
+
+            Publisher_box = soup.find('div', attrs={'class': 'publisher'})
+            if Publisher_box:
+                Publisher = Publisher_box.text.strip()
+            else:
+                Publisher = "Journal: DNE"
+
+            SRC_MBL_box = soup.find('div', attrs={'class': 'src mbl'})
+            if SRC_MBL_box:
+                SRC_MBL = SRC_MBL_box.text.strip()
+            else:
+                SRC_MBL = "Journal: DNE"
+            #
+            DOI_box = soup.find('div', attrs={'class': 'doi'})
+            if DOI_box:
+                DOI = DOI_box.text.strip()
+            else:
+                DOI = "DOI: DNE"
+
+            for index in range(len(self.f)):
+                    self.f[index][self.key] = (Title,Journal,Contrib,Publisher,SRC_MBL,DOI)
+                    return self.f
+
+def main():
+    query = ''
+    key = ''
+    d = []
+    for j in f:
+        for key in j.keys():
+            query = 'jstor' + " " + key
+            a = crawl_scrape(query,key,f)
+            a.crawl()
+            print a.scrape()
+
+if __name__ == '__main__':
+    main()
