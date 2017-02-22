@@ -2,7 +2,7 @@ from __future__ import division
 
 class HMM(object):
 
-    def __init__ (self,sequence, transitions= None, emissions=None):
+    def __init__ (self,sequence, transitions= None, emissions=None, path = None):
 
         self.sequence = sequence
         if transitions is not None:
@@ -11,18 +11,18 @@ class HMM(object):
             self.transitions = {
                 "S":
                         {
-                    "+": 0.1,
-                    "-": 0.9,
+                    "F": 0.5,
+                    "L": 0.5,
                     },
-                "+":
+                "F":
                     {
-                    "+": 0.5,
-                    "-": 0.5,
+                    "F": 0.95,
+                    "L": 0.05,
                     },
-                "-":
+                "L":
                     {
-                    "-": 0.4,
-                    "+": 0.6,
+                    "L": 0.90,
+                    "F": 0.10,
                     }
                 }
 
@@ -36,73 +36,129 @@ class HMM(object):
                     {
                     "": 1   # always emit the null string!
                     },
-                "+":    # 'F' indicates a fair die
+                "F":    # 'F' indicates a fair die
                     {
-                    "A": 0.30,
-                    "C": 0.25,
-                    "G": 0.15,
-                    "T": 0.30,
-
+                    "1": 1 / 6,
+                    "2": 1 / 6,
+                    "3": 1 / 6,
+                    "4": 1 / 6,
+                    "5": 1 / 6,
+                    "6": 1 / 6
                     },
-                "-":     # 'L' indicates a loaded die
+                "L":     # 'L' indicates a loaded die
                     {
-                    "A": 0.20,
-                    "C": 0.35,
-                    "G": 0.25,
-                    "T": 0.20,
-
+                    "1": 1 / 10,
+                    "2": 1 / 10,
+                    "3": 1 / 10,
+                    "4": 1 / 10,
+                    "5": 1 / 10,
+                    "6": 1 / 2
                     }
                 }
 
+                self.path = path
 
-    def viterbi(self):
-        #################################       iniatlizing variables/lists   #######################
-        pos_state_list = [1.0,'S']
-        neg_state_list = [1.0,'S']
-        start = 1
-        state_list = []
-        new_state_negative = 0
-        start_to_positive = 'S'
+    def evaluate(self):
+        running_product = 1
+        for position in range(len(self.path)-1):
 
-        new_sequence = self.sequence[1::]
 
-        ###############################             put states in list   ################################
+            old_state = (self.path[position])
+            new_state =(self.path[position+1])
 
-        for i in range(len(new_sequence)):
+            emission = self.sequence[position+1]
 
-            pos_state_positive = start * self.transitions[start_to_positive]['+']
-            pos_state_negative = new_state_negative * self.transitions['-']['+']
+            emission_prob = self.emissions[new_state][emission]
 
-            max_pos = max(pos_state_positive,pos_state_negative) * (self.emissions['+'][new_sequence[i]])
-            state_list.append(max_pos)
+            transition_prob = self.transitions[old_state][new_state]
 
-            neg_state_positive = start * self.transitions[start_to_positive]['-']
-            neg_state_negative = new_state_negative * self.transitions['-']['-']
+            #print emission,emission_prob,old_state,new_state, transition_prob
 
-            max_neg = max(neg_state_positive,neg_state_negative) * (self.emissions['-'][new_sequence[i]])
-            state_list.append(max_neg)
+            running_product *=transition_prob * emission_prob
 
-            pos_state_list[0] = "%.8f" % max_pos
-            neg_state_list[0] = "%.8f" % max_neg
+        return running_product
 
-            if max_pos > max_neg:
-                neg_state_list.append("+")
-                pos_state_list.append("+")
-            else:
-                neg_state_list.append("-")
-                pos_state_list.append("-")
+    def forward(self):
 
-            start = max_pos
-            new_state_negative = max_neg
-            start_to_positive = '+'
+        ############    inialitizing the variables  #################
+        temp_value = 1
 
-        return max(pos_state_list,neg_state_list)
+        path = self.path[1::]
+        sequence = self.sequence[1::]
+        counter = 0
+
+        #############   initalizing the dictionary  ##################
+        f = [{'Position':0,'S':1,'F':0,'L':0} for i in range(len(sequence))]
+        #############################################################
+
+        ####################################  putting first values into the dictionary #########################
+
+        ###################################         Fair       ###############################################
+        probability_state_and_transition_fair = temp_value * self.transitions['S']['F']
+        probaility_emission__fair = probability_state_and_transition_fair * self.emissions['F'][sequence[0]]
+        f[0]['F']= float("%.8f" % probaility_emission__fair)
+
+        ################################          Loaded  ################################################
+        probability_state_and_transition_loaded = temp_value * self.transitions['S']['L']
+        probaility_emission_loaded = probability_state_and_transition_loaded * self.emissions['L'][sequence[0]]
+        f[0]['L']= float("%.8f" % probaility_emission_loaded)
+        ###########################################################################################################
+
+
+
+        for i in range(1,len(sequence)):
+
+            ########################################    create fair values      ####################################
+            for j in range(1,len(path)):
+
+                probability_state_and_transition_fair_to_fair = f[counter]['F'] * self.transitions['F']['F']
+                probability_state_and_transition_fair_to_loaded = f[counter]['F'] * self.transitions['F']['L']
+
+                ###################################    create loaded values     ####################################
+                for k in range(1,len(path)):
+
+                    probability_state_and_transition_loaded_to_fair = f[counter]['L'] * self.transitions['L']['F']
+                    probability_state_and_transition_loaded_to_loaded = f[counter]['L'] * self.transitions['L']['L']
+
+            ##########################################  create new states with sums #################################
+            sum_fair = probability_state_and_transition_fair_to_fair + probability_state_and_transition_loaded_to_fair
+            sum_loaded = probability_state_and_transition_fair_to_loaded + probability_state_and_transition_loaded_to_loaded
+
+            ########################################    joint probaibilites with emissions  ############################
+            probaility_emission_fair_2 = sum_fair * self.emissions['F'][sequence[i]]
+            f[i]['F'] = float("%.8f" % probaility_emission_fair_2)
+
+            probaility_emission_loaded_2 = sum_loaded * self.emissions['L'][sequence[i]]
+            f[i]['L'] = float("%.8f" % probaility_emission_loaded_2)
+
+            ####################################### update counter  ####################################################
+
+            counter +=1
+
+            f[i]['Position'] = i
+        print(f)
+
+
+
+
+
+
 
 def main():
-    A = HMM('_ATGC')
-
-    print(A.viterbi())
+    A = HMM('_4326',path='SFLFL')
+    print(A.forward())
 
 
 if __name__ == '__main__':
     main()
+#will have to put in symbol indicating it's the start of a path
+#A = HMM('_6661115554444333',path='SFFFLLFFLLFLFLFLF')
+#B = HMM('_6661115554444333',path='SFFFFFFFFFFFFFFFF')
+
+#print (A.evaluate()/B.evaluate())
+
+#A = HMM('_66',path='SLF')
+# 6 0.5 S L 0.5
+# 6 0.166666666667 L F 0.1
+# 0.00416666666667
+#print (A.evaluate())
