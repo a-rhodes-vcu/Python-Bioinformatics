@@ -1,0 +1,330 @@
+from __future__ import division
+from Alexandrea_Stylianou_BNFO602_logfloat_2017 import log_float
+from math import log
+forward_value = ""
+class HMM(object):
+
+    """
+#Simple docstring for testing your HMM class
+>>> A = HMM("_14223453452666665656626646643666345263452341263")
+>>> forward_value = A.forward()
+>>> print (forward_value)
+3.68371784339e-34
+>>> viterbi_prob, MPS_path = A.viterbi()
+>>> print (viterbi_prob)
+1.58772133063e-35
+>>> print A.sequence + '\\n' + ''.join(MPS_path)
+_14223453452666665656626646643666345263452341263
+SFFFFFFFFFFFFFLLLLLLLLLLLLLLLLLLLLLLFLLFFFFFFFFF
+"""
+
+
+    def __init__(self, sequence=None, states=None, emissions=None):
+
+        self.sequence = sequence
+        self.sequence_len = len(sequence)
+
+        if states:
+            self.states = states
+
+        else:
+            self.states = {
+                "S": {
+                    "F": 0.5,
+                    "L": 0.5,
+                    },
+                "F": {
+                    "F": 0.95,
+                    "L": 0.05,
+                    },
+                "L": {
+                    "L": 0.90,
+                    "F": 0.10,
+                    }
+            }
+
+        if emissions:
+            self.emissions = emissions
+        else:
+            self.emissions = {
+
+                "S": # 'F' indicates a fair die
+                    {
+                        "_": 1
+                    },
+                "F":
+                    {
+                        "1": 1 / 6,
+                        "2": 1 / 6,
+                        "3": 1 / 6,
+                        "4": 1 / 6,
+                        "5": 1 / 6,
+                        "6": 1 / 6
+                    },
+                "L": # 'L' indicates a loaded die
+                    {
+                        "1": 1 / 10,
+                        "2": 1 / 10,
+                        "3": 1 / 10,
+                        "4": 1 / 10,
+                        "5": 1 / 10,
+                        "6": 1 / 2
+                    }
+            }
+
+        self.forward_table = ""     # Your dynamic programming variables will be stored in these
+        self.backard_table = ""     # You can define these later
+        self.viterbi_table = ""
+     # They should use the standard "list of dicts" format we've used in class
+
+        #Your stuff goes here for the rest of the initializer!
+
+        return
+
+    def forward(self):
+
+        # create a list of dictionaries
+
+        self.forward_table = [{} for i in range(len(self.sequence))]
+
+        # populate these dictionaries with states. Start set to zero, and rest set to one.
+
+        for j in range(len(self.forward_table)):
+
+            for i in self.states:
+
+                if i == 'S':  # little hard code
+
+                    self.forward_table[j]['S'] =  log_float(0)
+                else:
+
+                    self.forward_table[j][i] =  log_float(1)
+
+        # I wanted to experiment and try to put everything into one For loop
+
+        for position in range(1, len(self.sequence)):
+
+            for old_state in self.states:
+
+                for new_state in self.states:
+
+                    if old_state != new_state:
+
+                        if old_state == 'S':  # this is going to be the very first calculation for start. After this, we only focus on the other states
+
+                            self.forward_table[1][new_state] =  self.states[old_state][new_state] * \
+                                                               self.emissions[new_state][self.sequence[1]]
+
+                            # looks like this: {'S': 1.0, 'L': 0.05, 'F': 0.08333333333333333}
+
+                        #since we are done with the start state we will focus on the rest of the states
+                        if old_state != 'S' and new_state != 'S':
+
+                            #  As long as the two initial states don't match
+                            if old_state != new_state:  # all we care about is where the state lands on, not the state it was coming from.
+
+                                transition_probability = ((self.forward_table[position - 1][old_state] * self.states[old_state][new_state])
+                                                          + (self.forward_table[position - 1][new_state] * self.states[new_state][new_state]))
+
+                                # take transition probability and multiply it by the emission probability
+
+                                self.forward_table[position][new_state] = (
+                                    transition_probability * self.emissions[new_state][self.sequence[position]])
+
+                                #print self.forward_table[position][new_state]
+
+
+        return sum(self.forward_table[self.sequence_len - 1][state] for state in self.forward_table[self.sequence_len - 1])
+        # # 3.68371784339e-34
+
+    def viterbi(self):
+        #################################       iniatlizing variables/lists   #######################
+
+        possible_paths = {}
+        self.viterbi_table = [{} for i in range(len(self.sequence))]
+
+        # I am putting keys in my dictionaries
+        for j in range(len(self.sequence)):
+            for i in self.states:
+                if i == 'S':  # if i is equal to Start
+                    possible_paths[i] = ['S']  # simple dictionarie
+                    self.viterbi_table[j]['S'] =  log_float(1) #logify(1)  # list of dicts
+
+                else:
+                    possible_paths[i] = ['S']
+                    self.viterbi_table[j][i] =  log_float(1) #logify(1)
+
+        L_to_L = 0
+        F_to_F = 0
+        F_to_L = 0
+        L_to_F = 0
+
+        # I wanted to experiement, and use as little hard coding as possible. This first for loop is putting the start values in the dict
+        for i in range(1, len(self.sequence)):
+
+            for old_state in self.states:
+
+                for new_state in self.states:
+
+                    if old_state != new_state:  # I do not want the states to match, this is to ensure that I do not get a key error like [S][S]
+
+                        if old_state == 'S':  # this is to make sure that we are transitioing from start to a state
+
+                            possible_prob =  (self.emissions['S'][self.sequence[0]]) * self.states[old_state][new_state] * self.emissions[new_state][self.sequence[i]]
+
+                            self.viterbi_table[1][new_state] = possible_prob
+
+                    # now we put in the rest of the values
+
+                    if old_state != 'S' and new_state != 'S':  # we are done transitioning from the start
+
+                        if old_state == new_state:
+
+                            F_to_F = self.viterbi_table[i - 1][old_state] * self.states[old_state][old_state]  # viterbi value for F * transition prob for F -> F
+
+                            L_to_L = self.viterbi_table[i - 1][new_state] * self.states[new_state][new_state]  # viterbi value for L * transition prob for L -> L
+
+                        if old_state != new_state:
+
+                            F_to_L = self.viterbi_table[i - 1][old_state] * self.states[old_state][new_state]  # viterbi value for F * transition prob for F -> L
+
+                            L_to_F = self.viterbi_table[i - 1][new_state] * self.states[new_state][old_state]  # viterbi value for L 8 transition prob for L -> F
+
+                        # find the max of the two groups
+
+                        max_L = max(L_to_L, F_to_L) * self.emissions[new_state][self.sequence[i]]  # now we take the max of L -> L and F -> L times the emission of L
+
+                        max_F = max(F_to_F, L_to_F) * self.emissions[old_state][self.sequence[i]]  # same with F -> F and L -> F times the emission of F
+
+                        # insert into viterbi table
+
+                        self.viterbi_table[i][new_state] = max_L
+
+                        self.viterbi_table[i][old_state] = max_F
+
+
+
+        # Time to iterate through the dictionary and compare Viterbi values for each state
+        for i in range(1, len(self.viterbi_table)):
+
+            for k, v in self.viterbi_table[i].items():
+
+                for m, t, in self.viterbi_table[i].items():
+
+                    if k != 'S' and m != 'S':
+
+                        if self.viterbi_table[i][k] > self.viterbi_table[i][m]:
+
+                            possible_paths[k] += k
+
+                            possible_paths[m] += k
+
+                        elif self.viterbi_table[i][k] < self.viterbi_table[i][m]:
+
+                            possible_paths[k] += m
+
+                            possible_paths[m] += m
+
+                        break
+        return  (
+                max ((self.viterbi_table[self.sequence_len - 1][state],
+                possible_paths[state]) for state in self.states)   #state in self.states
+                )
+        #(1.5877213306255192e-35, ['S', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'F', 'L', 'L', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'])
+
+
+    def evaluate(self, path):
+        path = ''.join(path)
+        joint_probability_of_sequence_and_path =  log_float(1)#logify(1)
+        for position in range(len(path) - 1):
+            old_state = (path[position])
+            new_state = (path[position + 1])
+
+            emission = self.sequence[position + 1]
+
+            emission_prob = self.emissions[new_state][emission]
+
+            transition_prob = self.states[old_state][new_state]
+
+            # print emission,emission_prob,old_state,new_state, transition_prob
+
+            joint_probability_of_sequence_and_path*= transition_prob * emission_prob
+
+        # Your stuff goes here for the evaluation algorithm!
+        # Note that this method will require having already populated an instance variable self.sequence
+        # But will additionally require passing a string corresponding to the path.
+
+        return (joint_probability_of_sequence_and_path)
+        #3.41050451125e-39
+
+if __name__ == "__main__":
+    sequence = "_CCGTATACGCGACAGCAAATTTTGACAATATAACATGAATTTTACGGGGCACGCATGCCACC"
+
+    states = {
+        "S": {
+            "+": 0.5,
+            "-": 0.5,
+        },
+        "+": {
+            "+": 0.85,
+            "-": 0.15,
+        },
+        "-": {
+            "-": 0.95,
+            "+": 0.05,
+        }
+    }
+
+    emissions = {
+
+        "S":
+            {
+                "_": 1
+            },
+        "-":
+            {
+                "A": 0.1,
+                "C": 0.40,
+                "G": 0.40,
+                "T": 0.1,
+
+            },
+        "+":
+            {
+                "A": 0.35,
+                "C": 0.20,
+                "G": 0.10,
+                "T": 0.35,
+            }
+    }
+
+
+    #A = HMM(sequence, states, emissions)
+    #A = HMM("_14223453452666665656626646643666345263452341263")
+    #print A.viterbi()
+    # (1.5877213306255192e-35,
+    #  ['S', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L',
+    #   'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'F', 'L', 'L', 'F', 'F', 'F', 'F', 'F', 'F', 'F',
+    #   'F', 'F'])
+
+    #print A.forward()
+    #3.68371784339e-34
+
+    #print A.evaluate(['S', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'F', 'L', 'L', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'])
+    #3.41050451125e-39
+
+    #print A.evaluate(['S', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'])
+    #always fair evaluate: 1.26225494161e-38
+
+
+
+    #log_odds ratio, loaded_and_fair vs always fair
+    #Vit_vs_fair =    log(1.5877213306255192e-35/1.26225494161e-38,2)
+    #print Vit_vs_fair
+
+    import doctest
+
+    doctest.testmod()
+
+
+
