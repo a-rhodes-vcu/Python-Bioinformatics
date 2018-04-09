@@ -1,0 +1,349 @@
+from math import log
+from math import exp
+LOGZERO = None
+class log_float(object):
+    """
+The log_float class simulates a numeric type by overloading a few of the basic math operators.
+In this case, the +, *, / and cmp operators have all been overloaded in such a way that the end user of this class
+can largely use class instances as if they were normal (zero or positively valued) floats in real space.
+Note that implementation of the comparison operator __cmp__ is required so that comparisons may be directly made,
+but also so that Python functions such as max and sort will work as intended.
+However, values associated with class instances are actually represented internally in log space, and the operations
+are carried out entirely in log space. This helps to avoid numerical stability problems that arise from underflow errors
+in several HMM algorithms that involve successively taking the product of small probabilities.
+
+To use this class, the user need only initialize probability variables in dynamic programming matrices using
+log_float(value) instead of value.  Note that once a variable has been initialized as a log_float, successive operations
+with that variable using non-negative floats or ints as on of the operands will return a value that is a log_float, and
+that the integer or float will have been automatically recast into log space for the purpose of the operation.
+
+While the initializer accepts two arguments, the user should normally only use the first, corresponding to the value
+to be stored in the log_float.  The second is a flag reserved for internal use, which, if True, is indicates that the
+value passed is already log transformed.  Such usage is discouraged, but if the user wishes to create instances using
+values that are already in log rather than in real space, they may use statements of the form log_float(value, True)
+
+The one element of the this simulation of a numeric type that is non-transparent to the user is evaluation of log_float
+instances in some expressions.  The evaluate_real and evaluate_log methods return an associated real or log space value.
+
+>>> A = log_float(10)   # tests setting log_float with non-zero positive int  -- requires __init__
+>>> print A
+10.0
+>>> B = log_float(1)
+>>> print B             # tests printing log_float -- requires __str__
+1.0
+>>> C = A + B  # tests log_float + log_float
+>>> C                   # this should print it as well, but I think may use the __repr__ method, not __str__ -- confirm
+11.0
+>>> C = A + 2.1         # tests log_float + float -- requires __add__
+>>> C
+12.1
+>>> C = 2.1 + A         # tests float + log_float -- requires __radd__
+>>> print C
+12.1
+>>> D = A * C           # tests log_float * log_float -- requires __mul__
+>>> print D
+121.0
+>>> D = A * 2           # tests log_float * int -- requires __mul__
+>>> print D
+20.0
+>>> D = 2.1 * A           # tests float * log_float -- requires __rmul__
+>>> print D
+21.0
+>>> D = A * 0           # tests log_float * zero int -- requires __mul__
+>>> print D
+0.0
+>>> D = A / 2           # tests log_float /  int -- requires __div__
+>>> print D
+5.0
+>>> D = 2 / A           # tests int / log_float -- requires __rdiv__
+>>> print D
+0.2
+>>> D = 0 / A           # tests int / log_float -- requires __rdiv__
+>>> print D
+0.0
+>>> D = A / 0           # tests log_float /  zero -- requires __div__
+>>> print D
+Traceback (most recent call last):
+ZeroDivisionError
+>>> D = A / 2   # tests log_float /  int -- requires __div__
+>>> D
+5.0
+>>> A = log_float(0)    # tests setting log_float to zero, internally it should be LOGZERO
+>>> A
+0.0
+>>> C = A + 2           # tests adding a LOGZERO log_float + int -- requires __add__
+>>> C
+2.0
+>>> C = 2 + A           # tests adding an int + LOGZERO log_float  -- requires __radd__
+>>> C
+2.0
+>>> B = log_float(0)    #
+>>> C = A + B           # tests adding two LOGZERO log_floats together -- requires __add__
+>>> C
+0.0
+>>> C = A * B           # tests multiplying two LOGZERO log_floats -- requires __mul__
+>>> C
+0.0
+>>> A == B              # tests equality comparison of two LOGZERO log_floats -- requires __cmp__
+True
+>>> A > B               # tests gt comparison of two LOGZERO log_floats -- requires __cmp__
+False
+>>> A < B               # tests lt comparison of two LOGZERO log_floats -- requires __cmp__
+False
+>>> A = log_float(2)
+>>> A == B              # tests equality comparison of log_floats -- requires __cmp__
+False
+>>> A > B               # tests gt comparison of log_floats -- requires __cmp__
+True
+>>> A < B               # tests lt comparison of log_floats -- requires __cmp__
+False
+>>> B < A               # tests lt comparison of log_floats -- requires __cmp__
+True
+>>> A == 2              # tests equality comparison of log_float and int -- requires __cmp__
+True
+>>> 2 == A              # tests equality comparison of int and log_float -- requires __cmp__
+True
+>>> A == 2.0            # tests equality comparison of log_float and int -- requires __cmp__
+True
+>>> A < 2.1             # tests lt comparison of log_float and float -- requires __cmp__
+True
+>>> A > 2.1             # tests gt comparison of log_float and float -- requires __cmp__
+False
+>>> 2.1 < A             # tests lt comparison of float and log_float -- requires __cmp__
+False
+>>> 2.1 > A             # tests gt comparison of float and log_float -- requires __cmp__
+True
+>>> B = log_float(3.1459)
+>>> print A, B, C, D
+2.0 3.1459 0.0 5.0
+>>> E = [A,B,C,D]
+>>> print E
+[2.0, 3.1459, 0.0, 5.0]
+>>> print max(E)
+5.0
+>>> print sorted(E)
+[0.0, 2.0, 3.1459, 5.0]
+
+"""
+
+
+    def __init__(self, x, mode=None):
+        if mode is None:
+
+            try:
+
+                self.x = log(x)
+                
+
+
+            except ValueError:
+
+                if x < 0:
+
+                    raise ValueError, "Can't logify a negative negative number"
+
+                elif x == 0:
+
+                    self.x = LOGZERO
+                elif x == 0.0:
+
+                    self.x = log(1)
+        else:
+
+            self.x = x
+
+    def __add__(self, other):
+        #most of this was done in class
+        if isinstance(other, log_float):
+            if self.x == LOGZERO or other.x == LOGZERO:
+                if self.x == LOGZERO:
+                    return log_float(other.x, mode=True)
+                else:
+                    return log_float(self.x, mode=True)
+            elif self.x == LOGZERO and other.x == 0.0:
+                return log_float(log(1), True)
+            elif self.x > other.x:
+                return log_float(self.x + log(1 + exp(other.x - self.x)), mode=True)
+            else:
+                return log_float(other.x + log(1 + exp(self.x - other.x)), mode=True)
+        else:
+            if self.x == LOGZERO: # self.x is none, but there is other, return log other
+                if other:
+                    return log_float(log(other), mode=True)
+            elif self.x > log(other):
+                return log_float(self.x + log(1 + exp(log(other) - self.x)), mode=True)
+            else:
+                return log_float(log(other) + log(1 + exp(self.x - log(other))), mode=True)
+
+    def __radd__(self, other):
+        if isinstance(other, log_float):
+            if self.x == LOGZERO or other.x == LOGZERO:
+                if self.x == LOGZERO:
+                    return log_float(other.x, mode=True)
+                else:
+                    return log_float(self.x, mode=True)
+            elif self.x == LOGZERO and other.x == 0.0:
+                return log_float(log(1), True)
+            elif self.x > other.x:
+                return log_float(self.x + log(1 + exp(other.x - self.x)), mode=True)
+            else:
+                return log_float(other.x + log(1 + exp(self.x - other.x)), mode=True)
+        else:
+            #by far the hardest thing to trouble shoot was
+            # getting sum to work for my forward method.
+            # i kept getting this error:  return log_float(log(other), mode=True) ValueError: math domain error
+            #was able to solve it with this:
+            try:
+                if self.x == LOGZERO:
+
+                        return log_float(log(other), mode=True)
+
+                elif self.x > log(other):
+                    return log_float(self.x + log(1 + exp(log(other) - self.x)), mode=True)
+                else:
+                    return log_float(log(other) + log(1 + exp(self.x - log(other))), mode=True)
+
+            except ValueError:
+                if self.x  == LOGZERO:
+                    self.x = log_float(0)
+                    return self.x
+
+    def __mul__(self, other):
+        #most of this was done in class
+        if isinstance(other, log_float):
+            if self.x == LOGZERO or other.x == LOGZERO:
+                if self.x == LOGZERO:
+                    return log_float(other.x, mode=True)
+                else:
+                    return log_float(self.x, mode=True)
+            else:
+                return log_float(self.x + other.x, True)
+
+        else:
+            if other == 0:
+                return log(1)
+            else:
+                return log_float(self.x + log(other), True)
+
+
+    def __rmul__(self, other):
+        if isinstance(other, log_float):
+            if self.x == LOGZERO or other.x == LOGZERO:
+                if self.x == LOGZERO:
+                    return log_float(other.x, mode=True)
+                else:
+                    return log_float(self.x, mode=True)
+
+            else:
+                return log_float(self.x + other.x, True)
+
+        else:
+            if other == 0:
+                return log(1)
+            else:
+                return log_float(self.x + log(other), True)
+
+    def __div__(self, other):
+        #pretty much the same thing as multuply, but with substraction
+        if isinstance(other, log_float):
+
+            if self.x == LOGZERO or other.x == LOGZERO:
+                if self.x == LOGZERO:
+                    return log_float(other.x, mode=True)
+                else:
+                    return log_float(self.x, mode=True)
+
+            else:
+                return log_float(self.x - other.x, True)
+
+        else:
+            if other == 0:
+                return "Traceback (most recent call last):" + "\n" + "ZeroDivisionError"
+
+            else:
+                return log_float(self.x - log(other), True)
+
+    def __rdiv__(self, other):
+        if isinstance(other, log_float):
+            if self.x == LOGZERO or other.x == LOGZERO:
+                if self.x == LOGZERO:
+                    return log_float(other.x, mode=True)
+                else:
+                    return log_float(self.x, mode=True)
+
+            else:
+                return log_float(other.x - self.x, True)
+
+        else:
+            if other == 0:
+                return log(1)
+
+            else:
+                    return log_float(log(other) - self.x, True)
+
+    #for the comparisons, I chose not to do __cmp__
+    # keeping everything seperated was easier for me
+
+    def __eq__(self,other):
+        float_to_int = 0
+        if isinstance(other, log_float):
+            if self.x == other.x:
+                return True
+            else:
+                return False
+        if not isinstance(other,log_float):
+            float_to_int = exp(self.x)
+        float_to_int = int(float_to_int)
+        if float_to_int == other:
+            return True
+        else:
+            return False
+
+    #a!=b
+    def __ne__(self,other):
+        if self.x != other:
+            return False
+        else:
+            True
+    #a<b
+    def __lt__(self, other):
+        if self.x <other:
+            return True
+        else:
+            return False
+    #a>b
+    def __gt__(self, other):
+        if self.x >other:
+            return True
+        else:
+            return False
+    #a<=b
+    def __le__(self, other):
+        if self.x <=other:
+            return True
+        else:
+            return False
+    #a>=b
+    def __ge__(self, other):
+        if self.x >=other:
+            return True
+        else:
+            return False
+
+    def __str__(self):
+        if self.x == LOGZERO:
+            return str(log(1))
+        else:
+            return str(exp(self.x))
+
+    def __repr__(self):
+        if self.x == LOGZERO:
+            return str(log(1))
+        else:
+            return str(exp(self.x))
+
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
