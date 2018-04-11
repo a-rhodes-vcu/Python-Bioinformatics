@@ -1,0 +1,169 @@
+from __future__ import division
+
+
+START_KEY = 'S'
+
+sequence = "_CCGTATACGCGACAGCAAATTTTGACAATATAACATGAATTTTACGGGGCACGCATGCCACC"
+
+states = {
+    "S": {
+        "+": 0.5,
+        "-": 0.5,
+    },
+    "+": {
+        "+": 0.85,
+        "-": 0.15,
+    },
+    "-": {
+        "-": 0.95,
+        "+": 0.05,
+    }
+}
+
+emissions = {
+
+    "S":
+        {
+            "_": 1
+        },
+    "-":
+        {
+            "A": 0.1,
+            "C": 0.40,
+            "G": 0.40,
+            "T": 0.1,
+
+        },
+    "+":
+        {
+            "A": 0.35,
+            "C": 0.20,
+            "G": 0.10,
+            "T": 0.35,
+        }
+}
+
+len_of_seq = len(sequence)
+
+backward_table = [{} for i in xrange(len_of_seq)]
+
+
+
+start_dict = states[START_KEY]
+
+
+del states[START_KEY]
+
+
+for state in states:
+
+    backward_table[len_of_seq - 1][state] = 1
+
+
+
+
+
+for position in xrange(len(sequence) - 2, 0, -1):
+
+
+    for old_state in states:
+
+        backward_table[position][old_state] = 0
+
+
+        for new_state in states:
+
+
+            backward_table[position][old_state] += backward_table[position + 1][new_state] * states[old_state][new_state] * emissions[new_state][sequence[position + 1]]
+
+
+for old_state in states:
+
+    backward_table[0][old_state] =  emissions[old_state][sequence[1]] * backward_table[1][old_state] * start_dict[old_state]
+
+
+print sum(backward_table[0].values())
+#3.68371784339e-34
+
+
+
+
+states.update({START_KEY:start_dict})
+
+# create a list of dictionaries
+
+forward_table = [{} for i in range(len(sequence))]
+
+# populate these dictionaries with states. Start set to zero, and rest set to one.
+
+for j in range(len(forward_table)):
+
+    for i in states:
+
+        if i == 'S':  # little hard code
+
+            forward_table[j]['S'] = 0
+        else:
+
+            forward_table[j][i] = 1
+
+# I wanted to experiment and try to put everything into one For loop
+
+for position in range(1, len(sequence)):
+
+    for old_state in  states:
+
+        for new_state in  states:
+
+            if old_state != new_state:
+
+                if old_state == 'S':  # this is going to be the very first calculation for start. After this, we only focus on the other states
+
+                     forward_table[1][new_state] =  states[old_state][new_state] * \
+                                                        emissions[new_state][ sequence[1]]
+
+                    # looks like this: {'S': 1.0, 'L': 0.05, 'F': 0.08333333333333333}
+
+                # since we are done with the start state we will focus on the rest of the states
+                if old_state != 'S' and new_state != 'S':
+
+                    #  As long as the two initial states don't match
+                    if old_state != new_state:  # all we care about is where the state lands on, not the state it was coming from.
+
+                        transition_probability = (
+                        ( forward_table[position - 1][old_state] *  states[old_state][new_state])
+                        + ( forward_table[position - 1][new_state] *  states[new_state][new_state]))
+
+                        # take transition probability and multiply it by the emission probability
+
+                        forward_table[position][new_state] = (
+                            transition_probability *  emissions[new_state][ sequence[position]])
+
+                        # print  forward_table[position][new_state]
+
+print sum( forward_table[ len_of_seq - 1][state] for state in  forward_table[len_of_seq - 1])
+prior_probability = 3.68371784339e-34
+
+
+temp = []
+state_list = []
+loaded = 0
+
+del states[START_KEY]
+bayes_table = [[] for i in range(len(sequence))]
+
+for position in range(len(sequence)):
+    for first_state in states:
+
+                loaded = forward_table[position][first_state] * backward_table[position][first_state]/prior_probability
+                bayes_table[position].append(loaded) #temp table to store my values for the same position
+
+
+for position in range(len(bayes_table)): #compare and append
+
+    if bayes_table[position][0] > bayes_table[position][1]:
+        state_list.append("-")
+    elif bayes_table[position][0] < bayes_table[position][1]:
+        state_list.append("+")
+
+print state_list
